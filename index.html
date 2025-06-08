@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Cayfren</title>
+  <link rel="icon" type="image/png" href="siteicon.png">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: #0D3F36;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ---------- DESKTOP STYLE ---------- */
+    .desktop-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: none;
+    }
+
+    .page-desktop {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      transform: translateY(100%);
+      transition: transform 1s ease-in-out;
+      pointer-events: none;
+    }
+
+    .page-desktop.active {
+      transform: translateY(0%);
+    }
+
+    .page-desktop img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    #page1 { transform: translateY(0%); z-index: 1; }
+    #page2 { z-index: 2; }
+    #page3 { z-index: 3; }
+    #page4 { z-index: 4; }
+    #page5 { z-index: 5; }
+    #page6 { z-index: 6; }
+    #page7 { z-index: 7; }
+    #page8 { z-index: 8; }
+
+    .peek-indicator {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 20%;
+      background: linear-gradient(to top, rgba(0,0,0,0.3), transparent);
+      z-index: 100;
+      cursor: pointer;
+    }
+
+    /* ---------- MOBILE STYLE ---------- */
+    .mobile-container {
+      display: none;
+      width: 100%;
+      height: 100vh;
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
+      scroll-behavior: smooth;
+      overscroll-behavior: contain;
+      background-color: olive;
+    }
+
+    .mobile-page {
+      height: 90vh;                  /* Shorter than 100vh to leave vertical space */
+      margin: 5vh 0;                 /* Top & bottom margin between pages */
+      scroll-snap-align: start;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mobile-page img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;           /* Prevent cropping */
+      border-radius: 12px;           /* Optional: smooth look */
+      background-color: olive;     /* Consistent background */
+    }
+  </style>
+</head>
+<body>
+
+  <!-- DESKTOP VERSION -->
+  <div class="desktop-container" id="desktopContainer">
+    <div id="page1" class="page-desktop active"><img src="page1.png" alt="Page 1"></div>
+    <div id="page2" class="page-desktop"><img src="page2.png" alt="Page 2"></div>
+    <div id="page3" class="page-desktop"><img src="page3.png" alt="Page 3"></div>
+    <div id="page4" class="page-desktop"><img src="page4.png" alt="Page 4"></div>
+    <div id="page5" class="page-desktop"><img src="page5.png" alt="Page 5"></div>
+    <div id="page6" class="page-desktop"><img src="page6.png" alt="Page 6"></div>
+    <div id="page7" class="page-desktop"><img src="page7.png" alt="Page 7"></div>
+    <div id="page8" class="page-desktop"><img src="page8.png" alt="Page 8"></div>
+    <div class="peek-indicator" title="Scroll or swipe up to see next page"></div>
+  </div>
+
+  <!-- MOBILE VERSION -->
+  <div class="mobile-container" id="mobileContainer"></div>
+
+  <script>
+    const isMobile = window.innerWidth <= 768;
+    const desktopContainer = document.getElementById('desktopContainer');
+    const mobileContainer = document.getElementById('mobileContainer');
+
+    if (isMobile) {
+      // MOBILE VIEW ACTIVE
+      mobileContainer.style.display = 'block';
+
+      // Load mobile images
+      for (let i = 1; i <= 8; i++) {
+        const div = document.createElement('div');
+        div.className = 'mobile-page';
+        const img = document.createElement('img');
+        img.src = `mobile${i}.png`;
+        img.alt = `Mobile Page ${i}`;
+        div.appendChild(img);
+        mobileContainer.appendChild(div);
+      }
+
+    } else {
+      // DESKTOP VIEW ACTIVE
+      desktopContainer.style.display = 'block';
+      const pages = Array.from(document.querySelectorAll('.page-desktop'));
+      const peek = document.querySelector('.peek-indicator');
+      let currentIndex = 1;
+      let isAnimating = false;
+
+      function showPage(n) {
+        if (n > pages.length || isAnimating) return;
+        isAnimating = true;
+        pages[n - 1].classList.add('active');
+        currentIndex = n;
+        setTimeout(() => { isAnimating = false; }, 1000);
+      }
+
+      function hidePage(n) {
+        if (n <= 1 || isAnimating) return;
+        isAnimating = true;
+        pages[n - 1].classList.remove('active');
+        currentIndex = n - 1;
+        setTimeout(() => { isAnimating = false; }, 1000);
+      }
+
+      // Mouse scroll
+      window.addEventListener('wheel', (e) => {
+        if (e.deltaY > 50 && currentIndex < pages.length) {
+          showPage(currentIndex + 1);
+        } else if (e.deltaY < -50 && currentIndex > 1) {
+          hidePage(currentIndex);
+        }
+      });
+
+      // Touch swipe
+      let startY = 0;
+      window.addEventListener('touchstart', (e) => {
+        startY = e.touches[0].clientY;
+      });
+      window.addEventListener('touchend', (e) => {
+        const deltaY = e.changedTouches[0].clientY - startY;
+        if (deltaY < -50 && currentIndex < pages.length) {
+          showPage(currentIndex + 1);
+        } else if (deltaY > 50 && currentIndex > 1) {
+          hidePage(currentIndex);
+        }
+      });
+
+      // Click on peek area
+      peek.addEventListener('click', () => {
+        if (currentIndex < pages.length && !isAnimating) {
+          showPage(currentIndex + 1);
+        }
+      });
+    }
+  </script>
+</body>
+</html>
